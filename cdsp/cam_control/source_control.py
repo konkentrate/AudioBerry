@@ -7,8 +7,8 @@ from websocket import create_connection
 CAMILLA_WS = "ws://127.0.0.1:1234"
 
 UAC2_STATUS = "/proc/asound/card2/pcm0p/sub0/status"
-CONFIG_UAC2 = "/home/top/cdsp/configs/uac2.yml"
-CONFIG_SPOTIFY = "/home/top/cdsp/configs/raspotify.yml"
+CONFIG_UAC2 = "/home/top/AudioBerry/cdsp/configs/uac2.yml"
+CONFIG_SPOTIFY = "/home/top/AudioBerry/cdsp/configs/raspotify.yml"
 
 CHECK_INTERVAL = 1  # seconds
 

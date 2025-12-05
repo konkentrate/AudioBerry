@@ -6,7 +6,7 @@ Requires=camillagui.service
 [Service]
 User=top
 Type=idle
-ExecStart=python3 /home/top/cdsp/cam_control/volume_control.py
+ExecStart=python3 /home/top/AudioBerry/cdsp/cam_control/volume_control.py
 
 [Install]
 WantedBy=multi-user.target
