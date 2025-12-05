@@ -6,7 +6,7 @@ from websocket import create_connection
 CAMILLA_WS = "ws://127.0.0.1:1234"
 
 # ALSA status for Raspotify
-RASPO_STATUS = "/proc/asound/card1/pcm0p/sub0/status"
+RASPO_STATUS = "/proc/asound/card2/pcm0p/sub0/status"
 
 # Configs
 CONFIG_SPOTIFY = "/home/top/cdsp/configs/raspotify.yml"
