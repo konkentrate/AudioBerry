@@ -5,7 +5,7 @@ After=network.target sound.target
 [Service]
 User=top
 Type=simple
-ExecStart=/home/top/AudioBerry/cdsp/camilladsp -g -6 -l error -o /home/top/AudioBerry/cdsp/camilladsp.log -p 1234 /home/top/AudioBerry/cdsp/configs/uac2.yml
+ExecStart=/home/top/AudioBerry/cdsp/camilladsp -g-6 -l error -o /home/top/AudioBerry/cdsp/camilladsp.log -p 1234 /home/top/AudioBerry/cdsp/configs/uac2.yml
 Restart=on-failure
 
 [Install]
