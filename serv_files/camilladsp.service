@@ -1,6 +1,6 @@
 [Unit]
 Description=CamillaDSP Audio Engine
-After=network.target sound.target
+After=network.target sound.target gadget_init.service
 
 [Service]
 User=top

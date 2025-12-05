@@ -1,7 +1,6 @@
 [Unit]
 Description=Gadget Boot Starter
-After=multi-user.target snd-aloop.service
-Requires=snd-aloop.service
+After=multi-user.target
 
 [Service]
 Type=simple
