@@ -22,5 +22,7 @@ done
 
 echo "Chmod some files..."
 sudo chmod +x "/home/top/AudioBerry/uac2/gadget_init.sh"
+sudo chmod +x "/home/top/AudioBerry/cdsp/cam_control/source_control.py"
+sudo chmod +x "/home/top/AudioBerry/cdsp/cam_control/volume_control.py"
 
 echo "Done!"
