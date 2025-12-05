@@ -1,0 +1,11 @@
+[Unit]
+Description=Gadget Boot Starter
+After=multi-user.target
+
+[Service]
+ExecStart=/home/top/gadget/gadget_init.sh
+Group=root
+User=root
+
+[Install]
+WantedBy=multi-user.target

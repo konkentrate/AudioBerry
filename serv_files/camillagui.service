@@ -1,0 +1,11 @@
+[Unit]
+Description=CamillaDSP Backend and GUI
+After=multi-user.target
+
+[Service]
+User=top
+Type=idle
+ExecStart=/home/top/cdsp/camillagui_backend/camillagui_backend
+
+[Install]
+WantedBy=multi-user.target

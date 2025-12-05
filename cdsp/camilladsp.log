@@ -1,0 +1,1 @@
+2025-12-04 18:50:43.139012 ERROR [src/socketserver.rs:1195] Error validating config: Invalid filter 'Unnamed Filter 1'. Reason: Frequency must be > 0
