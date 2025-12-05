@@ -69,6 +69,14 @@ def set_alsa_mute(mixer, mute):
         print("Error setting ALSA mute")
         pass
 
+RASPO_STATUS = "/proc/asound/card2/pcm0p/sub0/status"
+def raspotify_playing():
+    try:
+        with open(RASPO_STATUS, "r") as f:
+            return "RUNNING" in f.read()
+    except:
+        return False
+
 # ---------- main ------------
 
 
@@ -99,6 +107,15 @@ set_alsa_vol(pcm_mixer, CDSPvol)
 set_alsa_mute(pcm_mixer, CDSPvol)
 
 while(True):
+    # check if raspotify active and if so SKIP
+    if raspotify_playing():
+        # Force DSP to 0 dB
+        set_cdsp_vol(cdsp_ws, 100)
+        set_alsa_vol(pcm_mixer, 100)
+        time.sleep(0.25)
+        continue
+
+
     # get current values
     ALSAvol = get_alsa_vol(pcm_mixer)
     CDSPvol = get_cdsp_vol(cdsp_ws)
