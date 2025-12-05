@@ -1,70 +1,123 @@
-#!/usr/bin/env python3
+import alsaaudio
+from websocket import create_connection
 import json
 import time
-from websocket import create_connection
+import sys
 
-# --- CONFIG ---
-CAMILLA_WS = "ws://127.0.0.1:1234"
-
-UAC2_STATUS = "/proc/asound/card2/pcm0p/sub0/status"
-CONFIG_UAC2 = "/home/top/cdsp/configs/uac2.yml"
-CONFIG_SPOTIFY = "/home/top/cdsp/configs/raspotify.yml"
-
-CHECK_INTERVAL = 1  # seconds
-
-
-def uac2_active():
-    """Return True if UAC2 gadget is streaming audio."""
-    try:
-        with open(UAC2_STATUS, "r") as f:
-            return "RUNNING" in f.read()
-    except FileNotFoundError:
-        return False
-
-
-def load_config(path):
-    """Set config file path, then reload CamillaDSP."""
-    ws = create_connection(CAMILLA_WS)
-
-    # Step 1: set config file path
-    ws.send(json.dumps({"SetConfigFilePath": path}))
-    reply1 = ws.recv()
-
-    # Step 2: reload
-    ws.send(json.dumps({"Reload": None}))
-    reply2 = ws.recv()
-
-    ws.close()
-
-    print(f"[CDSP] Loaded config: {path}")
-    print("Reply1:", reply1)
-    print("Reply2:", reply2)
-
-
-def get_current_path():
-    """Read which config file is currently active."""
-    ws = create_connection(CAMILLA_WS)
-    ws.send(json.dumps("GetConfigFilePath"))
+# Relationship between camillaDSP and alsa volumes: ALSAvol = CDSPvol + 100
+# values are converted to ALSA format instead of CDSP
+# Get volume levels
+def get_cdsp_vol(ws):
+    ws.send(json.dumps("GetVolume"))
     reply = json.loads(ws.recv())
-    ws.close()
-    return reply["GetConfigFilePath"]
+    return int(reply["GetVolume"]["value"] + 100)
+
+def get_alsa_vol(mixer):
+    try:
+        mixer = alsaaudio.Mixer('PCM', cardindex=1)
+        vol = mixer.getvolume(alsaaudio.PCM_CAPTURE)
+        return vol[0]
+    except alsaaudio.ALSAAudioError:
+        print("Error trying to get ALSA volume")
+        pass
+
+# Set volume levels
+def set_cdsp_vol(ws, vol):
+    vol = vol - 100
+    ws.send(json.dumps({"SetVolume": vol}))
+    print(ws.recv())
+
+def set_alsa_vol(mixer, vol):
+    try:
+        mixer.setvolume(vol)
+    except alsaaudio.ALSAAudioError:
+        print("Error trying to set ALSA volume")
+        pass
+
+# Get mute values
+def get_cdsp_mute(ws):
+    ws.send(json.dumps("GetMute"))
+    reply = json.loads(ws.recv())
+    bool = reply["GetMute"]["value"]
+    if bool == False:
+        return 1
+    else:
+        return 0
+
+def get_alsa_mute(mixer):
+    try:
+        mixer = alsaaudio.Mixer('PCM', cardindex=1) # this is a fix for bug in one of the libraries. Have to remake the object to detect a change for getrec()
+        mute = mixer.getrec()
+        return mute[0]
+    except alsaaudio.ALSAAudioError:
+        print("Error getting ALSA mute")
+        pass
+
+# Set mute values
+def set_cdsp_mute(ws, mute):
+    if mute == 1:
+        mute = False
+    else:
+        mute = True
+    ws.send(json.dumps({"SetMute": mute}))
+    print(ws.recv())
+
+def set_alsa_mute(mixer, mute):
+    try:
+        mixer.setrec(mute)
+    except alsaaudio.ALSAAudioError:
+        print("Error setting ALSA mute")
+        pass
+
+# ---------- main ------------
 
 
-def main():
-    print("CamillaDSP simple auto-switch started…")
-    last_loaded = None
+# Create connection got camillaDSP websocket
+# if you changed the -p option to another port number, change the "1234" port below
+cdsp_ws = create_connection("ws://127.0.0.1:1234")
 
-    while True:
-        # Decide which config should be active
-        target = CONFIG_UAC2 if uac2_active() else CONFIG_SPOTIFY
-        current = get_current_path()
-
-        if current != target:
-            load_config(target)
-            last_loaded = target
-
-        time.sleep(CHECK_INTERVAL)
+# Create alsaaudio mixer from PCM mixer
+try:
+    pcm_mixer = alsaaudio.Mixer('PCM',cardindex=1)
+    print("Mixer 'PCM' added")
+except alsaaudio.ALSAAudioError:
+    print("PCM Mixer not found!")
+    sys.exit(1)
 
 
-if __name__ == "__main__":
-    main()
+CDSPvol = get_cdsp_vol(cdsp_ws)
+ALSAvol = get_alsa_vol(pcm_mixer)
+CDSPmute = get_cdsp_mute(cdsp_ws)
+ALSAmute = get_alsa_mute(pcm_mixer)
+
+print("Starting values:")
+print("CDSPvol = " + str(CDSPvol) + " | CDSPmute = " + str(CDSPmute) + " | ALSAvol = " + str(ALSAvol) + " | ALSAmute = " + str(ALSAmute))
+
+
+# Set ALSA values to those of CDSP at startup
+set_alsa_vol(pcm_mixer, CDSPvol)
+set_alsa_mute(pcm_mixer, CDSPvol)
+
+while(True):
+    # get current values
+    ALSAvol = get_alsa_vol(pcm_mixer)
+    CDSPvol = get_cdsp_vol(cdsp_ws)
+
+    ALSAmute = get_alsa_mute(pcm_mixer)
+    CDSPmute = get_cdsp_mute(cdsp_ws)
+
+    # Volume was changed from the host computer
+    if CDSPvol != ALSAvol:
+        set_cdsp_vol(cdsp_ws, ALSAvol)
+        print("Volume Changed:")
+        print("CDSPvol = " + str(CDSPvol) + " | CDSPmute = " + str(CDSPmute) + " | ALSAvol = " + str(ALSAvol) + " | ALSAmute = " + str(ALSAmute))
+
+    # Mute was changed from the host computer
+    if CDSPmute != ALSAmute:
+        set_cdsp_mute(cdsp_ws, ALSAmute)
+        CDSPmute = get_cdsp_mute(cdsp_ws)
+        print("Mute Changed")
+        print("CDSPvol = " + str(CDSPvol) + " | CDSPmute = " + str(CDSPmute) + " | ALSAvol = " + str(ALSAvol) + " | ALSAmute = " + str(ALSAmute))
+
+    # Wait a little bit to avoid excessive CPU overhead
+    time.sleep(0.25)
