@@ -34,10 +34,10 @@ def get_current_config(ws):
 def load_config(ws, path):
     """Load a new config and apply it."""
     ws.send(json.dumps({"SetConfigFilePath": path}))
-    ws.recv()  # ignore response
+    ws.recv()  # acknowledge
 
     ws.send(json.dumps("Reload"))
-    ws.recv()  # ignore response
+    ws.recv()  # acknowledge
 
     print(f"[CDSP] Switched to: {path}")
 
@@ -47,14 +47,19 @@ def main():
 
     ws = create_connection(CAMILLA_WS)
 
+    last_state = None  # None = unknown at start
+
     while True:
-        # Decide which config should be active
-        should_be = CONFIG_SPOTIFY if raspotify_playing() else CONFIG_UAC2
+        spotify_state = raspotify_playing()  # True/False
 
-        current = get_current_config(ws)
+        # Only react when the state changes
+        if spotify_state != last_state:
+            last_state = spotify_state
 
-        if current != should_be:
-            load_config(ws, should_be)
+            if spotify_state:
+                load_config(ws, CONFIG_SPOTIFY)
+            else:
+                load_config(ws, CONFIG_UAC2)
 
         time.sleep(CHECK_INTERVAL)
 
