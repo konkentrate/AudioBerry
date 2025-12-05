@@ -1,6 +1,7 @@
 [Unit]
 Description=CamillaDSP Backend and GUI
-After=multi-user.target
+After=multi-user.target camilladsp.service
+Requires=camilladsp.service
 
 [Service]
 User=top

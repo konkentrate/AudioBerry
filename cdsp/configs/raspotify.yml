@@ -3,7 +3,7 @@ devices:
   adjust_period: null
   capture:
     channels: 2
-    device: hw:CARD=UAC2Gadget,DEV=0
+    device: hw:Loopback,1,0
     format: S32LE
     labels: null
     link_mute_control: null
@@ -21,7 +21,9 @@ devices:
     type: Alsa
   queuelimit: null
   rate_measure_interval: null
-  resampler: null
+  resampler:
+    profile: Balanced
+    type: AsyncSinc
   samplerate: 44100
   silence_threshold: null
   silence_timeout: null

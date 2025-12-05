@@ -7,6 +7,29 @@ Create /etc/modules-load.d/aloop.conf with `snd-aloop` to create mix-sink for Ra
     - Edit /etc/raspotify/conf `LIBRESPOT_BACKEND=alsa` and `LIBRESPOT_DEVICE=hw:Loopback,0,0` or mix-sink name
     - nano /etc/modprobe.d/aloop.conf `options snd-aloop pcm_devs=1 pcm_substreams=1 enable=1 index=2`
 
+
+### SETUP
+
+- `git clone https://github.com/konkentrate/AudioBerry`
+- `cd AudioBerry`
+- `wget` the two .tar.gz inside Releases
+- `bsdtar -xf bundle_linux_aarch64.tar.gz -C ./cdsp/cam_gui`
+- `bsdtar -xf  camilladsp-linux-aarch64.tar.gz  -C ./cdsp`
+- Adapt filepaths (if needed) in the following files:
+    - `AudioBerry/cdsp/cam_gui/_internal/config/camillagui.yml`
+    - cam_control .py files
+    - serv_files .service files
+
+### Copy and activate service files
+```
+sudo cp myapp.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable myapp.service
+sudo systemctl start myapp.service
+```
+
+
+
 ### How to handle the sudden pops on pauses
 
 ```

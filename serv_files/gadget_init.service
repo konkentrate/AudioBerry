@@ -1,11 +1,13 @@
 [Unit]
 Description=Gadget Boot Starter
-After=multi-user.target
+After=multi-user.target snd-aloop.service
+Requires=snd-aloop.service
 
 [Service]
+Type=simple
 ExecStart=/home/top/gadget/gadget_init.sh
-Group=root
 User=root
+Group=root
 
 [Install]
 WantedBy=multi-user.target

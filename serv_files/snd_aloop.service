@@ -1,0 +1,12 @@
+[Unit]
+Description=Load ALSA Loopback Device snd-aloop
+After=systemd-modules-load.service
+Requires=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/modprobe snd-aloop pcm_devs=1 pcm_substreams=1 enable=1 index=2
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
