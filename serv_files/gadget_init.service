@@ -1,12 +1,13 @@
 [Unit]
 Description=Gadget Boot Starter
-After=multi-user.target
+After=network.target sound.target
 
 [Service]
-Type=simple
-ExecStart=sudo /home/top/AudioBerry/uac2/gadget_init.sh
+Type=oneshot
+ExecStart=/home/top/AudioBerry/uac2/gadget_init.sh
 User=root
 Group=root
+RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
