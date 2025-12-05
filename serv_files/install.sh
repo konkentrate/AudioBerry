@@ -20,4 +20,7 @@ for svc in "$SERVICE_DIR"/*.service; do
     sudo systemctl enable "$svc_name"
 done
 
+echo "Chmod some files..."
+sudo chmod +x "/home/top/AudioBerry/uac2/gadget_init.sh"
+
 echo "Done!"
