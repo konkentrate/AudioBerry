@@ -5,10 +5,10 @@ from websocket import create_connection
 
 CAMILLA_WS = "ws://127.0.0.1:1234"
 
-# Path to ALSA status file for Raspotify output
-RASPO_STATUS = "/proc/asound/card2/pcm0p/sub0/status"
+# ALSA status for Raspotify
+RASPO_STATUS = "/proc/asound/card1/pcm0p/sub0/status"
 
-# Config files
+# Configs
 CONFIG_SPOTIFY = "/home/top/cdsp/configs/raspotify.yml"
 CONFIG_UAC2    = "/home/top/cdsp/configs/uac2.yml"
 
@@ -16,7 +16,7 @@ CHECK_INTERVAL = 1  # seconds
 
 
 def raspotify_playing():
-    """Check if Raspotify's ALSA device is in RUNNING state."""
+    """Check if Raspotify's ALSA device is RUNNING."""
     try:
         with open(RASPO_STATUS, "r") as f:
             return "RUNNING" in f.read()
@@ -31,8 +31,15 @@ def get_current_config(ws):
     return reply["GetConfigFilePath"]["value"]
 
 
+def set_gain_0db(ws):
+    """Set CamillaDSP gain to 0 dB (DSP volume = 0)."""
+    ws.send(json.dumps({"SetVolume": 0}))
+    resp = ws.recv()
+    print("[CDSP] Set gain: 0 dB   → reply:", resp)
+
+
 def load_config(ws, path):
-    """Load a new config and apply it."""
+    """Load and apply a new CamillaDSP config."""
     ws.send(json.dumps({"SetConfigFilePath": path}))
     ws.recv()  # ignore response
 
@@ -48,13 +55,19 @@ def main():
     ws = create_connection(CAMILLA_WS)
 
     while True:
-        # Decide which config should be active
-        should_be = CONFIG_SPOTIFY if raspotify_playing() else CONFIG_UAC2
+        # NEW logic: Spotify has priority
+        spotify_active = raspotify_playing()
+        should_be = CONFIG_SPOTIFY if spotify_active else CONFIG_UAC2
 
         current = get_current_config(ws)
 
+        # Switch config if needed
         if current != should_be:
             load_config(ws, should_be)
+
+            # Extra action: force gain to 0 dB only for Spotify
+            if spotify_active:
+                set_gain_0db(ws)
 
         time.sleep(CHECK_INTERVAL)
 
